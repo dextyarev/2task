@@ -40,7 +40,8 @@ func CreateMessage(w http.ResponseWriter, r *http.Request) {
 	res := DB.Create(&Message{Text: message})
 
 	if err := res.Error; err != nil {
-		http.Error(w, "Failed to create message", http.StatusInternalServerError)
+		log.Fatal("[DB] Ошибка создания записи ", err)
+		json.NewEncoder(w).Encode(struct{ err string }{"Ошибка создания записи"})
 		return
 	}
 
@@ -53,6 +54,7 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 	res := DB.Find(&messages)
 	if err := res.Error; err != nil {
 		log.Fatal("[DB] Ошибка поиска ", err)
+		json.NewEncoder(w).Encode(struct{ err string }{"Ошибка поиска записей"})
 		return
 	}
 
