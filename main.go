@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -19,7 +18,6 @@ type requestBody struct {
 }
 
 func InitDB() {
-	// в dsn вводим данные, которые мы указали при создании контейнера
 	dsn := "host=localhost user=postgres password=postgres dbname=2task port=5432 sslmode=disable"
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -28,7 +26,7 @@ func InitDB() {
 	}
 }
 
-func SetMessage(w http.ResponseWriter, r *http.Request) {
+func CreateMessage(w http.ResponseWriter, r *http.Request) {
 	var req requestBody
 	decoder := json.NewDecoder(r.Body)
 
@@ -38,18 +36,36 @@ func SetMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	message = req.Message
-	fmt.Fprintf(w, "message: %s", message)
+	newMessage := Message{Text: message}
+	res := DB.Create(&Message{Text: message})
+
+	if err := res.Error; err != nil {
+		http.Error(w, "Failed to create message", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(newMessage)
 }
 
-func GetMessage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "hello, %s", message)
+func GetMessages(w http.ResponseWriter, r *http.Request) {
+	messages := make([]Message, 1)
+
+	res := DB.Find(&messages)
+	if err := res.Error; err != nil {
+		log.Fatal("[DB] Ошибка поиска ", err)
+		return
+	}
+
+	response := map[string][]Message{
+		"messages": messages,
+	}
+
+	json.NewEncoder(w).Encode(response)
 }
 
 func main() {
-	// Вызываем метод InitDB() из файла db.go
 	InitDB()
 
-	// Автоматическая миграция модели Message
 	DB.AutoMigrate(&Message{})
 
 	router := mux.NewRouter()
