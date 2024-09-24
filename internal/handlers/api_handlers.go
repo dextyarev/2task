@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"2task/internal/messagesService"
-	"encoding/json"
+	"2task/internal/web/messages"
+	"context"
 	"log"
-	"net/http"
 )
 
 type Handler struct {
@@ -17,77 +17,71 @@ func NewHandler(service *messagesService.MessageService) *Handler {
 	}
 }
 
-func (h *Handler) GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
-	messages, err := h.Service.GetAllMessages()
+func (h *Handler) GetMessages(_ context.Context, _ messages.GetMessagesRequestObject) (messages.GetMessagesResponseObject, error) {
+	allMessages, err := h.Service.GetAllMessages()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return nil, err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(messages)
+
+	response := messages.GetMessages200JSONResponse{}
+
+	for _, msg := range allMessages {
+		message := messages.Message{
+			Id:      &msg.ID,
+			Message: &msg.Text,
+		}
+		response = append(response, message)
+	}
+
+	return response, nil
 }
 
-func (h *Handler) PostMessageHandler(w http.ResponseWriter, r *http.Request) {
-	var message messagesService.Message
-	err := json.NewDecoder(r.Body).Decode(&message)
+func (h *Handler) PostMessages(_ context.Context, request messages.PostMessagesRequestObject) (messages.PostMessagesResponseObject, error) {
+	messageRequest := request.Body
+	messageToCreate := messagesService.Message{Text: *messageRequest.Message}
+	createdMessage, err := h.Service.CreateMessage(messageToCreate)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
-	createdMessage, err := h.Service.CreateMessage(message)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	response := messages.PostMessages200JSONResponse{
+		Id:      &createdMessage.ID,
+		Message: &createdMessage.Text,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(createdMessage)
+	return response, nil
 }
 
-func (h *Handler) PatchMessageHandler(w http.ResponseWriter, r *http.Request) {
-	req := new(struct {
-		Id      int    `json:"id"`
-		Message string `json:"message"`
-	})
+func (h *Handler) DeleteMessages(_ context.Context, request messages.DeleteMessagesRequestObject) (messages.DeleteMessagesResponseObject, error) {
+	messageID := request.Body.Id
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	res, err := h.Service.UpdateMessageByID(req.Id, messagesService.Message{Text: req.Message})
+	err := h.Service.DeleteMessageByID(int(*messageID))
 
 	if err != nil {
 		log.Fatal("[DB] Ошибка обновления записи ", err)
-		json.NewEncoder(w).Encode(struct{ err string }{"Ошибка обновления записи"})
-		return
+		var res messages.DeleteMessages400TextResponse = "err"
+		return res, err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(struct {
-		Updated bool
-		Text    string
-	}{true, res.Text})
+	var res messages.DeleteMessages200TextResponse = "deleted"
+	return res, nil
+
 }
 
-func (h *Handler) DeleteMessageHandler(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Id int `json:"id"`
-	}
-	decoder := json.NewDecoder(r.Body)
-
-	if err := decoder.Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err := h.Service.DeleteMessageByID(req.Id)
+func (h *Handler) PatchMessages(_ context.Context, request messages.PatchMessagesRequestObject) (messages.PatchMessagesResponseObject, error) {
+	req := request.Body
+	messageToUpdate := messagesService.Message{Text: *req.Message}
+	createdMessage, err := h.Service.UpdateMessageByID(int(*req.Id), messageToUpdate)
 
 	if err != nil {
-		log.Fatal("[DB] Ошибка обновления записи ", err)
-		json.NewEncoder(w).Encode(struct{ err string }{"Ошибка обновления записи"})
-		return
+		return nil, err
 	}
 
-	json.NewEncoder(w).Encode(struct{ Deleted bool }{true})
+	response := messages.PatchMessages200JSONResponse{
+		Id:      req.Id,
+		Message: &createdMessage.Text,
+	}
+
+	return response, nil
 }

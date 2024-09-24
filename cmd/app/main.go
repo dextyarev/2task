@@ -4,9 +4,11 @@ import (
 	"2task/internal/database"
 	"2task/internal/handlers"
 	"2task/internal/messagesService"
-	"net/http"
+	"2task/internal/web/messages"
+	"log"
 
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -15,12 +17,19 @@ func main() {
 
 	repo := messagesService.NewMessageRepository(database.DB)
 	service := messagesService.NewService(repo)
+
 	handler := handlers.NewHandler(service)
 
-	router := mux.NewRouter()
-	router.HandleFunc("/api/messages", handler.GetMessagesHandler).Methods("GET")
-	router.HandleFunc("/api/messages", handler.PostMessageHandler).Methods("POST")
-	router.HandleFunc("/api/messages", handler.PatchMessageHandler).Methods("PATCH")
-	router.HandleFunc("/api/messages", handler.DeleteMessageHandler).Methods("DELETE")
-	http.ListenAndServe(":8080", router)
+	e := echo.New()
+
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	// Прикол для работы в echo. Передаем и регистрируем хендлер в echo
+	strictHandler := messages.NewStrictHandler(handler, nil) // тут будет ошибка
+	messages.RegisterHandlers(e, strictHandler)
+
+	if err := e.Start(":8080"); err != nil {
+		log.Fatalf("failed to start with err: %v", err)
+	}
 }
