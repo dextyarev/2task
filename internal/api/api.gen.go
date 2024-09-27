@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/oapi-codegen/runtime"
 	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
 )
 
@@ -36,11 +35,6 @@ type NewUser struct {
 	Password *string `json:"password,omitempty"`
 }
 
-// UpdateUser defines model for UpdateUser.
-type UpdateUser struct {
-	union json.RawMessage
-}
-
 // User defines model for User.
 type User struct {
 	Email    *string `json:"email,omitempty"`
@@ -48,21 +42,9 @@ type User struct {
 	Password *string `json:"password,omitempty"`
 }
 
-// UserEmail defines model for UserEmail.
-type UserEmail struct {
-	Email *string `json:"email,omitempty"`
-	Id    *uint   `json:"id,omitempty"`
-}
-
 // UserID defines model for UserID.
 type UserID struct {
 	Id *uint `json:"id,omitempty"`
-}
-
-// UserPassword defines model for UserPassword.
-type UserPassword struct {
-	Id       *uint   `json:"id,omitempty"`
-	Password *string `json:"password,omitempty"`
 }
 
 // DeleteMessagesJSONRequestBody defines body for DeleteMessages for application/json ContentType.
@@ -78,98 +60,10 @@ type PostMessagesJSONRequestBody = NewMessage
 type DeleteUsersJSONRequestBody = UserID
 
 // PatchUsersJSONRequestBody defines body for PatchUsers for application/json ContentType.
-type PatchUsersJSONRequestBody = UpdateUser
+type PatchUsersJSONRequestBody = User
 
 // PostUsersJSONRequestBody defines body for PostUsers for application/json ContentType.
 type PostUsersJSONRequestBody = NewUser
-
-// AsUserEmail returns the union data inside the UpdateUser as a UserEmail
-func (t UpdateUser) AsUserEmail() (UserEmail, error) {
-	var body UserEmail
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromUserEmail overwrites any union data inside the UpdateUser as the provided UserEmail
-func (t *UpdateUser) FromUserEmail(v UserEmail) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeUserEmail performs a merge with any union data inside the UpdateUser, using the provided UserEmail
-func (t *UpdateUser) MergeUserEmail(v UserEmail) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JsonMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsUserPassword returns the union data inside the UpdateUser as a UserPassword
-func (t UpdateUser) AsUserPassword() (UserPassword, error) {
-	var body UserPassword
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromUserPassword overwrites any union data inside the UpdateUser as the provided UserPassword
-func (t *UpdateUser) FromUserPassword(v UserPassword) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeUserPassword performs a merge with any union data inside the UpdateUser, using the provided UserPassword
-func (t *UpdateUser) MergeUserPassword(v UserPassword) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JsonMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsUser returns the union data inside the UpdateUser as a User
-func (t UpdateUser) AsUser() (User, error) {
-	var body User
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromUser overwrites any union data inside the UpdateUser as the provided User
-func (t *UpdateUser) FromUser(v User) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeUser performs a merge with any union data inside the UpdateUser, using the provided User
-func (t *UpdateUser) MergeUser(v User) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JsonMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-func (t UpdateUser) MarshalJSON() ([]byte, error) {
-	b, err := t.union.MarshalJSON()
-	return b, err
-}
-
-func (t *UpdateUser) UnmarshalJSON(b []byte) error {
-	err := t.union.UnmarshalJSON(b)
-	return err
-}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {

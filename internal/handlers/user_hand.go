@@ -46,29 +46,25 @@ func (h *Handler) GetUsers(_ context.Context, request api.GetUsersRequestObject)
 
 func (h *Handler) PatchUsers(_ context.Context, request api.PatchUsersRequestObject) (api.PatchUsersResponseObject, error) {
 	var resErr api.PatchUsers400TextResponse = "err"
-	user, asUserErr := request.Body.AsUser()
+	req := request.Body
 
-	if asUserErr != nil {
-		return resErr, fmt.Errorf("invalid input data")
+	User := repositories.User{Model: gorm.Model{ID: uint(*req.Id)}}
+
+	if req.Email != nil {
+		User.Email = *req.Email
 	}
 
-	User := repositories.User{Model: gorm.Model{ID: uint(*user.Id)}}
-
-	if user.Email != nil {
-		User.Email = *user.Email
+	if req.Password != nil {
+		User.Password = *req.Password
 	}
 
-	if user.Password != nil {
-		User.Password = *user.Password
-	}
-
-	updated, err := h.UserService.UpdateUserByID(int(*user.Id), User)
+	updated, err := h.UserService.UpdateUserByID(int(*req.Id), User)
 	if err != nil {
 		return resErr, err
 	}
 
 	return api.PatchUsers200JSONResponse{
-		Id:       user.Id,
+		Id:       req.Id,
 		Email:    &updated.Email,
 		Password: &updated.Password,
 	}, nil

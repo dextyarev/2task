@@ -121,7 +121,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateUser'
+                $ref: '#/components/schemas/User'
       responses:
         400:
           description: error
@@ -195,11 +195,6 @@ components:
           type: string
         password:
           type: string
-    UpdateUser:
-      oneOf:
-        - $ref: '#/components/schemas/UserEmail'
-        - $ref: '#/components/schemas/UserPassword'
-        - $ref: '#/components/schemas/User'
     User:
       type: object
       properties:
@@ -208,22 +203,6 @@ components:
           format: uint
         email:
           type: string
-        password:
-          type: string
-    UserEmail:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: uint
-        email:
-          type: string
-    UserPassword:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: uint
         password:
           type: string
     UserID:
