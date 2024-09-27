@@ -46,39 +46,22 @@ func (h *Handler) GetUsers(_ context.Context, request api.GetUsersRequestObject)
 
 func (h *Handler) PatchUsers(_ context.Context, request api.PatchUsersRequestObject) (api.PatchUsersResponseObject, error) {
 	var resErr api.PatchUsers400TextResponse = "err"
-
 	user, asUserErr := request.Body.AsUser()
-	userEmail, asUserEmailErr := request.Body.AsUserEmail()
-	userPassword, asUserPasswordErr := request.Body.AsUserPassword()
 
-	if asUserErr != nil && asUserEmailErr != nil && asUserPasswordErr != nil {
+	if asUserErr != nil {
 		return resErr, fmt.Errorf("invalid input data")
 	}
 
 	User := repositories.User{Model: gorm.Model{ID: uint(*user.Id)}}
 
-	if asUserErr == nil {
-		if user.Email != nil {
-			User.Email = *user.Email
-		}
-		if user.Password != nil {
-			User.Password = *user.Password
-		}
+	if user.Email != nil {
+		User.Email = *user.Email
 	}
 
-	if asUserEmailErr == nil && userEmail.Email != nil {
-		User.Email = *userEmail.Email
+	if user.Password != nil {
+		User.Password = *user.Password
 	}
 
-	if asUserPasswordErr == nil && userPassword.Password != nil {
-		User.Password = *userPassword.Password
-	}
-
-	if User.Email == "" && User.Password == "" {
-		return resErr, fmt.Errorf("no data to update")
-	}
-
-	fmt.Println(User)
 	updated, err := h.UserService.UpdateUserByID(int(*user.Id), User)
 	if err != nil {
 		return resErr, err
