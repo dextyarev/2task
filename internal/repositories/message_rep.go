@@ -1,8 +1,11 @@
-package messagesService
+package repositories
 
 import (
+	"2task/internal/database/models"
 	"gorm.io/gorm"
 )
+
+type Message = models.Message
 
 type MessageRepository interface {
 	CreateMessage(message Message) (Message, error)

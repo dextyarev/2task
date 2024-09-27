@@ -1,10 +1,15 @@
-package messagesService
+package services
+
+import "2task/internal/repositories"
+
+type MessageRepository = repositories.MessageRepository
+type Message = repositories.Message
 
 type MessageService struct {
 	repo MessageRepository
 }
 
-func NewService(repo MessageRepository) *MessageService {
+func NewMessageService(repo MessageRepository) *MessageService {
 	return &MessageService{repo: repo}
 }
 

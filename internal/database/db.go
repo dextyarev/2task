@@ -1,10 +1,9 @@
 package database
 
 import (
-	"log"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
 )
 
 var DB *gorm.DB
